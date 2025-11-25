@@ -1,0 +1,17 @@
+# Flask Backend Dependencies
+flask==3.0.0
+flask-cors==4.0.0
+Pillow==10.1.0
+werkzeug==3.0.1
+
+# OCR Dependencies (for Person 3)
+# pytesseract==0.3.10
+# opencv-python==4.8.1.78
+
+# VQA Dependencies (for Person 1)
+# torch==2.1.0
+# transformers==4.35.2
+
+# Common utilities
+numpy==1.26.2
+requests==2.31.0

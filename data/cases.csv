@@ -1,0 +1,11 @@
+image_path,question,expected_module,expected_output,notes
+samples/stop_sign.jpg,What does the sign say?,ocr,STOP,Text recognition test
+samples/red_car.jpg,What color is the car?,vqa,The car is red,Color identification test
+samples/group_photo.jpg,How many people are in this image?,vqa,There are 5 people,Object counting test
+samples/business_card.jpg,What is the phone number?,ocr,+1-555-0123,Document text extraction
+samples/park_scene.jpg,Describe what you see,vqa,A park with trees and a bench,Scene description test
+samples/street_sign.jpg,What street is this?,ocr,Main Street,Address reading test
+samples/menu.jpg,What is the price of pizza?,ocr,$12.99,Price extraction from menu
+samples/cat_photo.jpg,What animal is this?,vqa,A cat,Animal identification
+samples/traffic_light.jpg,What color is the traffic light showing?,vqa,Red,Color and object recognition
+samples/handwritten_note.jpg,Read the handwritten text,ocr,(Handwritten text content),Handwriting OCR test
