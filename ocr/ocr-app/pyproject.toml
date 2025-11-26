@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ocr-app"
+version = "0.1.0"
+description = "An OCR application for extracting text from images."
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pytesseract = "^0.3.8"
+opencv-python = "^4.5.3"
+Pillow = "^8.2.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
