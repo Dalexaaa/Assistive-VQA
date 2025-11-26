@@ -1,0 +1,35 @@
+# VQA Module Requirements
+# Core dependencies for LLaVA-1.5-7b-hf model
+
+# Transformers and model hub
+transformers
+# torch==2.1.0
+# torchvision==0.16.0
+# torchaudio==2.1.0
+
+# Image processing
+Pillow
+
+# Utility
+numpy
+scipy
+
+# GPU support (optional)
+# PyTorch is platform-specific; install it separately for best results.
+# Examples (run BEFORE installing the rest of requirements):
+#  - CPU-only (recommended if no GPU):
+#      python -m pip install --index-url https://download.pytorch.org/whl/cpu \
+#        torch==2.7.1+cpu torchvision==0.22.1+cpu torchaudio==2.7.1 --extra-index-url https://pypi.org/simple
+#  - CUDA 11.8 (if you have an NVIDIA GPU):
+#      python -m pip install --index-url https://download.pytorch.org/whl/cu118 \
+#        torch==2.7.1+cu118 torchvision==0.22.1+cu118 torchaudio==2.7.1+cu118 --extra-index-url https://pypi.org/simple
+# Note: adjust torch version if you need a different release; these examples are broadly compatible on Windows.
+
+# Testing
+pytest
+pytest-cov
+
+# Performance monitoring (optional)
+psutil
+
+accelerate
