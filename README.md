@@ -9,8 +9,8 @@ helping visually impaired users understand their surroundings.
 | Role | Member | Description |
 |------|---------|-------------|
 | Person 1 | Abby | VQA + Repository Setup |
-| Person 2 | Rajini | UI + Integration of VQA and OCR |
-| Person 3 | TBD | OCR + Final Presentation and Demo |
+| Person 2 | Mirac | UI + Integration of VQA and OCR |
+| Person 3 | Rajini | OCR + Final Presentation and Demo |
 
 ---
 
