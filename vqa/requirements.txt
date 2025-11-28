@@ -1,35 +1,45 @@
 # VQA Module Requirements
-# Core dependencies for LLaVA-1.5-7b-hf model
+# Cross-platform compatible dependencies (Windows, macOS, Linux)
+# Python 3.8+
 
-# Transformers and model hub
-transformers
-# torch==2.1.0
-# torchvision==0.16.0
-# torchaudio==2.1.0
+# ============================================================================
+# CORE DEPENDENCIES (install these via pip)
+# ============================================================================
 
-# Image processing
-Pillow
+# Machine Learning & Vision
+# NOTE: PyTorch must be installed SEPARATELY for your platform (see README)
+transformers         # Hugging Face model hub and inference
+accelerate           # Mixed precision & distributed training
 
-# Utility
-numpy
-scipy
+# Image & Array Processing
+Pillow               # Image I/O and manipulation
+numpy                 # Numerical computing
+scipy                # Scientific computing (metrics)
 
-# GPU support (optional)
-# PyTorch is platform-specific; install it separately for best results.
-# Examples (run BEFORE installing the rest of requirements):
-#  - CPU-only (recommended if no GPU):
-#      python -m pip install --index-url https://download.pytorch.org/whl/cpu \
-#        torch==2.7.1+cpu torchvision==0.22.1+cpu torchaudio==2.7.1 --extra-index-url https://pypi.org/simple
-#  - CUDA 11.8 (if you have an NVIDIA GPU):
-#      python -m pip install --index-url https://download.pytorch.org/whl/cu118 \
-#        torch==2.7.1+cu118 torchvision==0.22.1+cu118 torchaudio==2.7.1+cu118 --extra-index-url https://pypi.org/simple
-# Note: adjust torch version if you need a different release; these examples are broadly compatible on Windows.
+# Testing & Quality Assurance
+pytest               # Unit testing framework
+pytest-cov            # Coverage reporting
 
-# Testing
-pytest
-pytest-cov
+# Performance & Monitoring
+psutil                # System resource monitoring
 
-# Performance monitoring (optional)
-psutil
-
-accelerate
+# ============================================================================
+# PYTORCH (install separately before this requirements.txt)
+# ============================================================================
+# PyTorch is platform-specific and must be installed FIRST for your OS:
+#
+# WINDOWS & MAC & LINUX:
+#   CPU-only (no GPU):
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#
+#   NVIDIA GPU (CUDA 12.1) - Windows/Linux only:
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+#
+#   NVIDIA GPU (CUDA 11.8) - Windows/Linux only:
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+#   Apple Silicon (M1/M2/M3 - macOS only):
+#     pip install torch torchvision torchaudio
+#
+# See README.md for detailed installation instructions per platform.
+# ============================================================================
