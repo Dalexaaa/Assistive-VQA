@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 # VQA Module
 
 **Owner:** Person 1 (Abby)  
@@ -65,197 +63,89 @@ nvidia-smi
 from vqa.vqa_model import answer_question
 
 # Answer a question about an image
-answer = answer_question("path/to/image.jpg", "What color is the car?")
-print(answer)
+"""VQA module README
+
+This file documents how to install, run, and troubleshoot the VQA module that uses
+the BLIP-2 model (`Salesforce/blip2-opt-2.7b`).
+"""
+
+# VQA Module (BLIP-2)
+
+**Status:** Implemented (model: `Salesforce/blip2-opt-2.7b`)
+
+This package provides a small API to perform Visual Question Answering using BLIP-2.
+
+**Files of interest:**
+- `vqa_model.py` — core functions: `load_model()`, `answer_question(image_path, question)`, `unload_model()`
+- `setup_vqa.py` — helper that downloads the model and verifies it loads correctly
+- `test_vqa.py` — unit tests for the module
+
+**Quickstart**
+
+1. Create and activate a virtual environment (PowerShell example):
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
 ```
 
-### Advanced Usage
+2. Install dependencies. Install non-PyTorch deps from the project `requirements.txt`, then install PyTorch using the official instructions for your platform (CPU/CUDA).
 
-```python
-from vqa.vqa_model import load_model, answer_question, unload_model
+```powershell
+python -m pip install -r requirements.txt
 
-# Manually load model for batch processing
-model, processor, device = load_model()
-
-# Process multiple images
-images_and_questions = [
-    ("image1.jpg", "What is in the image?"),
-    ("image2.jpg", "How many people are there?"),
-]
-
-for image_path, question in images_and_questions:
-    answer = answer_question(image_path, question)
-    print(f"Q: {question}")
-    print(f"A: {answer}\n")
-
-# Clean up when done
-unload_model()
+# Example CPU-only PyTorch install (adjust for CUDA if you have a GPU):
+python -m pip install "torch==2.9.1+cpu" torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
-### Flask Integration
+3. Download and verify the model (runs once):
 
-The module is automatically integrated with the Flask backend. Simply upload an image and ask a question through the `/api/query` endpoint:
-
-```bash
-curl -X POST http://localhost:5001/api/query \
-  -F "image=@test_image.jpg" \
-  -F "question=What is in this image?"
+```powershell
+python vqa\setup_vqa.py
 ```
 
-## Performance Notes
+4. Run tests:
 
-### Device Selection
-- **CUDA GPU:** Fastest inference (~1-2 seconds per question)
-- **Apple MPS:** Medium speed (Mac with M1/M2 chips)
-- **CPU:** Slower but functional (~10-15 seconds per question)
-
-### Memory Usage
-- **VRAM:** ~16GB for float16 inference on CUDA
-- **RAM:** ~8GB for CPU inference
-- Model is loaded once and reused for multiple queries
-
-### Optimization Tips
-1. Use GPU when possible for 5-10x speedup
-2. Batch multiple questions together if processing large datasets
-3. Adjust temperature and top_p parameters for different response styles:
-   - Lower temperature (0.3-0.5): More conservative, consistent answers
-   - Higher temperature (0.9-1.0): More creative, varied answers
-
-## Function Reference
-
-### `answer_question(image_path: str, question: str) -> str`
-Main function to answer a visual question about an image.
-
-**Parameters:**
-- `image_path` (str): Path to the image file (supports PNG, JPG, GIF, WebP)
-- `question` (str): Natural language question about the image
-
-**Returns:**
-- `str`: Answer to the question
-
-**Raises:**
-- `FileNotFoundError`: If image file doesn't exist
-- `ValueError`: If question is empty or invalid
-- `Exception`: If model inference fails
-
-### `load_model() -> tuple`
-Explicitly load the model and processor (cached, only loads once).
-
-**Returns:**
-- `tuple`: (model, processor, device)
-
-### `unload_model() -> None`
-Unload the model and free GPU memory.
-
-## Testing
-
-```bash
-# Test with command line
-python vqa/vqa_model.py path/to/image.jpg "Your question here"
-
-# Example
-python vqa/vqa_model.py ../data/samples/test_image.jpg "What is in this image?"
+```powershell
+python -m pytest -q vqa\test_vqa.py
 ```
 
-## Model Information
-
-- **Source:** https://huggingface.co/llava-hf/llava-1.5-7b-hf
-- **Architecture:** Vision-Language Transformer
-- **Vision Encoder:** CLIP ViT-L/14
-- **Language Model:** Llama-2-7B
-- **Training Data:** LLaVA-Instruct-80K dataset
-- **License:** Apache 2.0
-
-## Troubleshooting
-
-### Out of Memory (OOM) Error
-- Reduce batch size or switch to CPU inference
-- Ensure no other GPU processes are running
-- Clear GPU cache with `torch.cuda.empty_cache()`
-
-### Model Download Fails
-- Check internet connection
-- Ensure sufficient disk space (~20GB)
-- Set HF token if required: `huggingface-cli login`
-
-### Slow Inference
-- Verify GPU is being used: `torch.cuda.is_available()`
-- Check if CUDA is properly installed
-- Profile with: `torch.profiler`
-
-## References
-
-- LLaVA Paper: https://arxiv.org/abs/2304.08485
-- Hugging Face Model: https://huggingface.co/llava-hf/llava-1.5-7b-hf
-- CLIP Paper: https://arxiv.org/abs/2103.14030
-- Llama 2 Paper: https://arxiv.org/abs/2307.09288
-
-    image = Image.open(image_path).convert('RGB')
-    
-    # Process inputs
-    inputs = processor(image, question, return_tensors="pt")
-    
-    # Generate answer
-    outputs = model.generate(**inputs)
-    answer = processor.decode(outputs[0], skip_special_tokens=True)
-    
-    return answer
-```
-
-## Setup Instructions
-
-1. Install dependencies:
-```bash
-pip install torch transformers pillow
-```
-
-2. Implement the function in `vqa/vqa_model.py`
-
-3. Test independently:
-```bash
-python vqa/vqa_model.py
-```
-
-## Example Usage
+5. Quick ad-hoc inference (Python example):
 
 ```python
 from vqa.vqa_model import answer_question
-
-# Test questions
-answer = answer_question("car.jpg", "What color is the car?")
-print(answer)  # Expected: "red" or "The car is red"
-
-answer = answer_question("park.jpg", "How many people are there?")
-print(answer)  # Expected: "3 people" or similar
+print(answer_question(r"data/samples/sample.jpg", "What is in this image?"))
 ```
 
-## Test Cases
+Or from the shell:
 
-Create test examples in this directory with:
-- Sample images
-- Questions
-- Expected answers
-- Actual results
-
-## Integration
-
-Your module will be automatically called by the UI when:
-- Questions are about visual content (colors, objects, scenes)
-- Questions contain keywords like: "what color", "how many", "what is", "describe"
-
-No changes needed to integration code - just implement the function!
-
-## Dependencies to Add
-
-Add to `requirements.txt`:
-```
-torch>=2.1.0
-transformers>=4.35.0
+```powershell
+.\venv\Scripts\python.exe -c "from vqa.vqa_model import answer_question; print(answer_question(r'data/samples/sample.jpg','What is in this image?'))"
 ```
 
-## Resources
+Integration
+- The Flask UI can call `vqa.vqa_model.answer_question(image_path, question)` to serve VQA responses.
+- Example HTTP (POST) to a running endpoint:
 
-- [BLIP-2 Paper](https://arxiv.org/abs/2301.12597)
-- [Hugging Face Transformers](https://huggingface.co/docs/transformers)
-- [VQA Dataset](https://visualqa.org/)
->>>>>>> Stashed changes
+```bash
+curl -X POST http://localhost:5001/api/query -F "image=@test.jpg" -F "question=What is in this image?"
+```
+
+Notes & Troubleshooting
+- Model download: expect several GB of download and cache. Ensure sufficient disk space.
+- Hugging Face cache on Windows may warn about symlink support; this is informational. To silence: set `HF_HUB_DISABLE_SYMLINKS_WARNING=1`.
+- Non-fatal warnings such as ``torch_dtype is deprecated`` are safe to ignore; they don't prevent operation.
+- If you experience OOM errors:
+  - Use GPU if available and ensure `torch` matches your CUDA version.
+  - Try float16 inference or model offloading techniques.
+  - Reduce batch sizes and clear cache with `torch.cuda.empty_cache()`.
+- If model download fails:
+  - Verify internet and disk space
+  - Authenticate with Hugging Face if required: `huggingface-cli login`
+
+If you want a smaller memory footprint we can switch to a smaller BLIP model variant or add explicit offloading in `vqa_model.py`.
+
+References
+- BLIP-2: https://huggingface.co/Salesforce/blip2-opt-2.7b
+- Hugging Face Transformers: https://huggingface.co/docs/transformers

@@ -114,19 +114,36 @@ def answer_question(image_path: str, question: str) -> str:
         # Load and prepare image
         image = Image.open(image_path).convert('RGB')
         
+        # Prepare a clearer instruction-style prompt to avoid the model echoing the question
+        prompt = f"Question: {question}\nAnswer:"
+
         # Prepare inputs for BLIP-2
-        inputs = processor(images=image, text=question, return_tensors="pt").to(device)
-        
-        # Generate answer
+        inputs = processor(images=image, text=prompt, return_tensors="pt").to(device)
+
+        # Generate answer with safer decoding parameters
+        # - use max_new_tokens to limit generated tokens (preferable to max_length)
+        # - use beam search for more stable outputs
+        # - prevent short n-gram repetition
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
-                max_length=128,
-                num_beams=1
+                max_new_tokens=64,
+                num_beams=3,
+                no_repeat_ngram_size=3,
+                early_stopping=True
             )
-        
-        # Decode the answer
-        answer = processor.decode(outputs[0], skip_special_tokens=True).strip()
+
+        # Decode the answer text
+        # Use batch decode for consistency
+        answer = processor.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+
+        # Post-process: if model echoed the question/prompt, remove the prompt portion
+        if answer.lower().startswith(f"question: {question.lower()}"):
+            # remove the repeated question portion
+            answer = answer[len(f"question: {question}"):].strip(' :\n')
+        # If the model left the literal 'Answer:' marker, strip it
+        if answer.lower().startswith("answer:"):
+            answer = answer[len("answer:"):].strip(' :\n')
         
         return answer if answer else "Unable to generate a response."
         
