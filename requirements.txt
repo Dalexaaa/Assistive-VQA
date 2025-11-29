@@ -9,8 +9,10 @@ werkzeug==3.0.1
 # opencv-python==4.8.1.78
 
 # VQA Dependencies (for Person 1)
-# torch==2.1.0
-# transformers==4.35.2
+torch==2.1.0
+torchvision==0.16.0
+transformers==4.35.2
+accelerate==0.24.1
 
 # Common utilities
 numpy==1.26.2

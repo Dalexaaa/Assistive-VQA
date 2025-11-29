@@ -1,0 +1,45 @@
+# VQA Module Requirements
+# Cross-platform compatible dependencies (Windows, macOS, Linux)
+# Python 3.8+
+
+# ============================================================================
+# CORE DEPENDENCIES (install these via pip)
+# ============================================================================
+
+# Machine Learning & Vision
+# NOTE: PyTorch must be installed SEPARATELY for your platform (see README)
+transformers         # Hugging Face model hub and inference
+accelerate           # Mixed precision & distributed training
+
+# Image & Array Processing
+Pillow               # Image I/O and manipulation
+numpy                 # Numerical computing
+scipy                # Scientific computing (metrics)
+
+# Testing & Quality Assurance
+pytest               # Unit testing framework
+pytest-cov            # Coverage reporting
+
+# Performance & Monitoring
+psutil                # System resource monitoring
+
+# ============================================================================
+# PYTORCH (install separately before this requirements.txt)
+# ============================================================================
+# PyTorch is platform-specific and must be installed FIRST for your OS:
+#
+# WINDOWS & MAC & LINUX:
+#   CPU-only (no GPU):
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#
+#   NVIDIA GPU (CUDA 12.1) - Windows/Linux only:
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+#
+#   NVIDIA GPU (CUDA 11.8) - Windows/Linux only:
+#     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+#   Apple Silicon (M1/M2/M3 - macOS only):
+#     pip install torch torchvision torchaudio
+#
+# See README.md for detailed installation instructions per platform.
+# ============================================================================
