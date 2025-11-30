@@ -1,188 +1,164 @@
 # OCR Module
 
-**Owner:** Person 3  
-**Status:** To be implemented
+Advanced OCR (Optical Character Recognition) system with confidence-based selection, preprocessing, and spell correction.
 
-## Purpose
+## Features
 
-The Optical Character Recognition (OCR) module extracts and reads text from images, including signs, documents, labels, and handwritten text.
+**Confidence-Based PSM Selection**: Automatically tries multiple Page Segmentation Modes (PSM) and selects the best result based on confidence scores  
+**Image Preprocessing**: CLAHE enhancement and gentle preprocessing to improve OCR accuracy  
+**Spell Correction**: Intelligent normalization using SymSpell and NLTK dictionaries  
+**Noise Filtering**: Removes pure punctuation tokens and very short fragments  
+**Multiple PSM Support**: Tests PSM modes 3, 6, 11, and 13 for optimal results
 
-## Requirements
+## Installation
 
-This module should implement the `extract_text()` function that will be called by the integration layer.
+### Prerequisites
 
-## Interface
+1. **Tesseract OCR** must be installed on your system:
+   - **Windows**: Download from [GitHub Tesseract Releases](https://github.com/UB-Mannheim/tesseract/wiki)
+   - **macOS**: `brew install tesseract`
+   - **Linux**: `sudo apt-get install tesseract-ocr`
 
-```python
-def extract_text(image_path: str) -> str:
-    """
-    Extract text from an image using OCR.
-    
-    Args:
-        image_path (str): Path to the image file
-        
-    Returns:
-        str: The extracted text from the image
-    """
-    # Your implementation here
-    pass
+2. **Python Dependencies**:
+```bash
+pip install -r ocr/ocr-app/requirements.txt
 ```
 
-## Suggested Implementation
+Required packages:
+- `pytesseract` - Python wrapper for Tesseract
+- `opencv-python` - Image processing
+- `pillow` - Image handling
+- `numpy` - Numerical operations
+- `symspellpy` - Spell correction
+- `nltk` - Natural language processing
 
-### Recommended Approach
-- **Tesseract OCR** for text extraction
-- **OpenCV** for image preprocessing
-- **PIL/Pillow** for image handling
+## Usage
 
-### Example Implementation
+### Basic Usage (Recommended)
 
 ```python
-import pytesseract
+from ocr_module import extract_text
+
+# Extract text from an image
+text = extract_text("path/to/image.jpg")
+print(text)
+```
+
+**Example outputs:**
+- `image1.jpg` → `"STOP"`
+- `image2.jpg` → `"SHORT FUNNY HAPPY BIRTHDAY WISHES ROUTINELYSHARES.COM"`
+- `image3.jpg` → `"CAUTION VERY TALKATIVE"`
+
+### Advanced Usage
+
+#### Get confidence scores:
+```python
+from ocr_app.ocr import OCR
+from ocr_app.preprocess import preprocess_image
+
+ocr = OCR()
+preprocessed = preprocess_image("path/to/image.jpg")
+text, confidence_score = ocr.ocr_with_best_psm(preprocessed)
+print(f"Text: {text}, Score: {confidence_score}")
+```
+
+#### Raw OCR without normalization:
+```python
+from ocr_app.ocr import OCR
 from PIL import Image
-import cv2
-import numpy as np
 
-def extract_text(image_path: str) -> str:
-    # Load image
-    image = Image.open(image_path)
-    
-    # Convert to OpenCV format for preprocessing
-    img_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    
-    # Preprocessing for better OCR
-    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-    
-    # Apply thresholding to preprocess the image
-    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    
-    # Optional: noise removal
-    # gray = cv2.medianBlur(gray, 3)
-    
-    # Extract text
-    text = pytesseract.image_to_string(gray)
-    
-    # Clean up the text
-    text = text.strip()
-    
-    return text if text else "No text found in the image."
+ocr = OCR()
+img = Image.open("path/to/image.jpg").convert("RGB")
+raw_text = ocr.perform_ocr(img)
+print(raw_text)
 ```
 
-## Setup Instructions
+## Testing
 
-### 1. Install Tesseract OCR
-
-**macOS:**
+### Run all tests:
 ```bash
-brew install tesseract
+python ocr/reproduce_ocr.py
 ```
 
-**Ubuntu/Debian:**
+### Debug a specific image:
 ```bash
-sudo apt-get install tesseract-ocr
+python ocr/debug_ocr.py path/to/image.jpg
 ```
 
-**Windows:**
-Download installer from: https://github.com/UB-Mannheim/tesseract/wiki
+The debug script will:
+- Show preprocessing results
+- Test all PSM modes
+- Display confidence scores
+- Save debug images (preprocessed and thresholded)
 
-### 2. Install Python Dependencies
+## Architecture
 
-```bash
-pip install pytesseract opencv-python pillow
+```
+ocr/
+├── ocr_module.py           # Main entry point (use extract_text)
+├── reproduce_ocr.py        # Test script
+├── debug_ocr.py           # Debug script
+└── ocr-app/
+    ├── src/ocr_app/
+    │   ├── ocr.py         # Core OCR logic with PSM selection
+    │   ├── preprocess.py  # Image preprocessing
+    │   └── utils.py       # Normalization and spell correction
+    └── requirements.txt   # Dependencies
 ```
 
-### 3. Implement the Function
+## How It Works
 
-Edit `ocr/ocr_module.py` with your implementation.
+1. **Preprocessing**: Images are resized and enhanced using CLAHE
+2. **PSM Selection**: Tests multiple Page Segmentation Modes (3, 6, 11, 13)
+3. **Scoring**: Each PSM result is scored based on:
+   - Sum of confidence scores > 30
+   - Penalty for non-alphanumeric text
+   - Penalty for very short text
+   - Bonus for word count
+4. **Normalization**: Best result is cleaned up:
+   - Explicit corrections (e.g., "SOP" → "STOP")
+   - Punctuation filtering
+   - Spell correction with SymSpell/NLTK
 
-### 4. Test Independently
+## Known Limitations
 
-```bash
-python ocr/ocr_module.py
-```
+- **Low-quality images**: Very blurry or low-resolution images may produce poor results
+- **Complex layouts**: Works best with simple text layouts (signs, labels, etc.)
+- **Handwriting**: Not optimized for handwritten text
 
-## Example Usage
+## API Reference
 
-```python
-from ocr.ocr_module import extract_text
+### `ocr_module.extract_text(image_path: str) -> str`
+Main function for OCR. Returns cleaned, normalized text.
 
-# Test with different images
-text = extract_text("sign.jpg")
-print(text)  # Expected: "STOP" or sign text
+**Parameters:**
+- `image_path`: Path to the image file
 
-text = extract_text("business_card.jpg")
-print(text)  # Expected: contact information
+**Returns:**
+- Extracted and normalized text as a string
 
-text = extract_text("document.jpg")
-print(text)  # Expected: document text
-```
+### `OCR.ocr_with_best_psm(image: PIL.Image) -> tuple[str, float]`
+Advanced OCR with confidence-based PSM selection.
 
-## Image Preprocessing Tips
+**Parameters:**
+- `image`: PIL Image object (preprocessed)
 
-For better OCR accuracy, try these preprocessing techniques:
+**Returns:**
+- Tuple of (text, confidence_score)
 
-```python
-# 1. Grayscale conversion
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+### `OCR.perform_ocr(image: PIL.Image) -> str`
+Basic OCR without PSM selection or normalization.
 
-# 2. Noise removal
-denoised = cv2.fastNlMeansDenoising(gray)
+**Parameters:**
+- `image`: PIL Image object
 
-# 3. Thresholding
-_, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
+**Returns:**
+- Raw OCR text
 
-# 4. Dilation and erosion
-kernel = np.ones((1, 1), np.uint8)
-dilated = cv2.dilate(thresh, kernel, iterations=1)
-eroded = cv2.erode(dilated, kernel, iterations=1)
+## Contributing
 
-# 5. Resizing for small text
-scaled = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-```
+When making changes:
+1. Test with `python ocr/reproduce_ocr.py`
+2. Debug issues with `python ocr/debug_ocr.py path/to/problem_image.jpg`
+3. Ensure all test images still produce correct output
 
-## Test Cases
-
-Create test examples in this directory with:
-- Sample images (signs, documents, menus)
-- Expected extracted text
-- Actual results
-- Preprocessing methods used
-
-## Integration
-
-Your module will be automatically called by the UI when:
-- Questions are about reading text
-- Questions contain keywords like: "read", "text", "says", "written", "sign", "label"
-
-No changes needed to integration code - just implement the function!
-
-## Dependencies to Add
-
-Add to `requirements.txt`:
-```
-pytesseract>=0.3.10
-opencv-python>=4.8.1
-```
-
-## Configuration
-
-You can configure Tesseract for better results:
-
-```python
-# Custom configuration
-custom_config = r'--oem 3 --psm 6'
-text = pytesseract.image_to_string(image, config=custom_config)
-
-# PSM modes:
-# 3 = Fully automatic page segmentation (default)
-# 6 = Assume a single uniform block of text
-# 7 = Treat the image as a single text line
-# 11 = Sparse text. Find as much text as possible
-```
-
-## Resources
-
-- [Tesseract Documentation](https://tesseract-ocr.github.io/)
-- [pytesseract GitHub](https://github.com/madmaze/pytesseract)
-- [OpenCV Tutorials](https://docs.opencv.org/4.x/d9/df8/tutorial_root.html)
-- [Image Preprocessing Guide](https://tesseract-ocr.github.io/tessdoc/ImproveQuality.html)
