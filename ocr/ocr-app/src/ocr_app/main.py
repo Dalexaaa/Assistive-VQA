@@ -44,20 +44,33 @@ def process_images(paths: List[str], tesseract_path: str | None, lang: str, oem:
     results = {}
     for p in paths:
         try:
-            # use the improved preprocessing pipeline before OCR
+            # Preprocess the image
             try:
-                pil_img = preprocess_image(p)
-            except Exception:
-                # fallback to letting OCR load the image itself
-                pil_img = None
-
-            if pil_img is not None:
-                text = ocr_engine.perform_ocr(pil_img)
-            else:
-                text = ocr_engine.extract_text(p)
-
-            # basic normalization + suggest correction to common candidates (e.g., STOP)
-            text = normalize_ocr(text, candidates=['STOP'])
+                preprocessed = preprocess_image(p)
+            except Exception as e:
+                print(f"[OCR] Preprocessing failed, using direct load: {e}")
+                preprocessed = ocr_engine.load_image(p)
+            
+            # Run full OCR with multi-scale processing
+            raw_text = ocr_engine.full_ocr(preprocessed, scales=(1.0, 1.5, 2.0))
+            
+            # Try PSM trials if initial result has low confidence or is short
+            if len(raw_text.strip()) < 10 or ocr_engine.last_confidence < 50:
+                psm_text, psm_conf = ocr_engine._ocr_with_psm_trials(preprocessed)
+                if psm_conf > 50 and len(psm_text) >= len(raw_text):
+                    raw_text = psm_text
+            
+            # Try MSER detection if result is still short
+            if len(raw_text.strip()) < 5:
+                boxes = ocr_engine._detect_text_regions_mser(preprocessed)
+                if boxes:
+                    mser_text = ocr_engine._ocr_regions_and_merge(preprocessed, boxes)
+                    if len(mser_text) > len(raw_text):
+                        raw_text = mser_text
+            
+            # Apply spell correction and normalization
+            text = normalize_ocr(raw_text)
+            
             results[p] = text
             print(f"--- {p} ---")
             print(text or "(no text found)")

@@ -2,11 +2,6 @@
 from typing import Iterable
 import os
 
-try:
-    from symspellpy import Verbosity
-except ImportError:
-    Verbosity = None
-
 
 # Cache for English dictionary
 _ENGLISH_DICT = None
@@ -56,33 +51,6 @@ def load_english_dictionary() -> set:
     _ENGLISH_DICT = _get_comprehensive_word_list()
     print(f"[OCR] Using built-in dictionary with {len(_ENGLISH_DICT)} words")
     return _ENGLISH_DICT
-
-
-def load_symspell():
-    """Load SymSpell for fast spell correction.
-    
-    Returns None if SymSpell is not available.
-    """
-    try:
-        from symspellpy import SymSpell, Verbosity
-        
-        sym_spell = SymSpell(max_dictionary_edit_distance=3, prefix_length=7)
-        
-        # Load dictionary
-        try:
-            # Try to load from package data
-            import pkg_resources
-            dict_path = pkg_resources.resource_filename("symspellpy", "frequency_dictionary_en_82_765.txt")
-            if os.path.isfile(dict_path):
-                sym_spell.load_dictionary(dict_path, term_index=0, count_index=1)
-                return sym_spell
-        except:
-            pass
-        
-        # If that fails, return None (will use fallback correction)
-        return None
-    except ImportError:
-        return None
 
 
 def _get_comprehensive_word_list() -> set:
@@ -298,94 +266,72 @@ def _levenshtein(a: str, b: str) -> int:
 
 
 def normalize_ocr(text: str, candidates: Iterable[str] | None = None) -> str:
-    """Apply SymSpell spell correction and normalizations.
+    """Apply simple normalizations and optionally correct to a close candidate.
 
     - Uppercases result
-    - Applies explicit corrections (SOP->STOP, etc.)
-    - Uses SymSpell for intelligent spell correction
-    - Falls back to Levenshtein distance with NLTK dictionary
-    - Filters URL artifacts
+    - Replaces common digit/letter confusions
+    - If `candidates` provided, and a candidate is within edit distance 1-2, replace with it.
     """
     if not text:
         return text
+    s = text.strip().upper()
+
+    # digit -> letter mappings commonly confused by OCR
+    mapping = str.maketrans({
+        '0': 'O',
+        '1': 'I',
+        '5': 'S',
+        '2': 'Z',
+        '8': 'B'
+    })
+    s = s.translate(mapping)
     
-    text = text.strip()
-    if not text:
-        return text
-    
-    # Load dictionaries
-    english_words = load_english_dictionary()
-    symspell = load_symspell()
-    
-    # Explicit corrections that should happen before any other processing
-    explicit_corrections = {
-        'SOP': 'STOP',
-        'STGP': 'STOP',
-        'ST0P': 'STOP',
-        'STQP': 'STOP',
-        'FRO': 'PRO',
-        'WISHED': 'WISHES',
-        'WSIS': 'WISHES',
-        'NAPPY': 'HAPPY',
-        'TALIVATIN': 'TALKATIVE',
-        'MERI': 'VERY',
-        'MERI,': 'VERY',
-        'ROUTINELY': '',
-        'SHARES': '',
-        'COM': '',
-    }
-    
-    # Apply explicit corrections first
-    text_upper = text.upper()
-    for wrong, right in explicit_corrections.items():
-        if text_upper == wrong or wrong in text_upper:
-            text_upper = text_upper.replace(wrong, right)
-    
-    # Clean up stray punctuation (remove commas between words)
-    import re
-    text_upper = re.sub(r'\s*,\s*', ' ', text_upper)
-    
-    # Filter out URL artifacts and clean up
-    words = text_upper.split()
-    filtered_words = []
+    # Common OCR misreadings - explicit corrections
+    if s == 'FRO' or s == 'SOP':
+        s = 'STOP'
+
+    # trim non-alpha around words
+    s = ''.join(ch for ch in s if ch.isalnum() or ch.isspace())
+    # Filter out website URLs and very short words
+    words = [w for w in s.split() if w and len(w) >= 2 and '.COM' not in w]
+
+    # Use provided candidates or load full English dictionary
+    if candidates:
+        vocab = set(w.upper() for w in candidates)
+    else:
+        # Load comprehensive English dictionary
+        vocab = load_english_dictionary()
+
+    corrected = []
     for w in words:
-        w = w.strip()
-        if not w:
+        # If word is already in vocabulary, keep it as-is
+        if w in vocab:
+            corrected.append(w)
             continue
-        # Skip URL components
-        if any(x in w.lower() for x in ['routinely', 'shares', 'com', '.com', 'http', 'www']):
-            continue
-        # Skip very short fragments
-        if len(w) < 2:
-            continue
-        filtered_words.append(w)
-    
-    if not filtered_words:
-        return text.upper().strip()
-    
-    # Try SymSpell correction
-    corrected_words = []
-    for word in filtered_words:
-        # If word is already correct, keep it
-        if word.lower() in english_words:
-            corrected_words.append(word)
-            continue
-        
-        # Try SymSpell correction with edit distance 1 only (conservative)
-        if symspell and Verbosity:
-            suggestions = symspell.lookup(word.lower(), Verbosity.CLOSEST, max_edit_distance=1)
-            if suggestions and suggestions[0].distance == 1:
-                best_suggestion = suggestions[0].term.upper()
-                # Verify suggestion is in NLTK dictionary
-                if best_suggestion.lower() in english_words:
-                    corrected_words.append(best_suggestion)
-                    continue
-        
-        # Keep the original word if no high-confidence correction found
-        corrected_words.append(word)
-    
-    result = ' '.join(corrected_words)
-    return result if result else text.upper().strip()
+            
+        # find best match in vocab
+        best = w
+        best_dist = None
+        for v in vocab:
+            # only consider candidates of similar length (avoid huge mismatches)
+            if abs(len(v) - len(w)) > 3:
+                continue
+            d = _levenshtein(w, v)
+            if best_dist is None or d < best_dist:
+                best = v
+                best_dist = d
+        # accept small corrections only
+        if best_dist is not None and best_dist <= 1:
+            # Distance 1: very likely correct
+            corrected.append(best)
+        elif best_dist is not None and best_dist == 2 and len(w) > 4:
+            # Distance 2: accept only for longer words
+            corrected.append(best)
+        else:
+            # Keep original word if no close match
+            corrected.append(w)
+
+    return ' '.join(corrected)
 def log_message(message):
     print(f"[LOG] {message}")
 

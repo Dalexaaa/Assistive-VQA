@@ -9,66 +9,38 @@ import os
 
 
 def preprocess_image(image_path: str, target_width: int = 800) -> Image.Image:
-    """Load and apply improved preprocessing, returning a PIL Image suitable for pytesseract.
+    """Load and apply gentle preprocessing, returning a PIL Image suitable for pytesseract.
 
+    This uses a lighter touch than before - only CLAHE for contrast enhancement,
+    no aggressive thresholding or morphological operations.
+    
     Steps:
     - load -> convert to RGB
-    - resize (keep aspect)
+    - resize (keep aspect ratio if image is smaller than target)
     - convert to grayscale
-    - denoise with bilateral filter
-    - apply CLAHE (contrast limited adaptive histogram equalization)
-    - adaptive threshold
-    - morphological closing + dilation to strengthen broken strokes
-
-    The pipeline is tuned to improve recognition on high-contrast signs like STOP.
+    - apply gentle CLAHE (contrast limited adaptive histogram equalization)
+    
+    Args:
+        image_path: path to input image
+        target_width: target width for resizing (default 800)
+    
+    Returns:
+        PIL Image ready for OCR
     """
     if not os.path.isfile(image_path):
         raise FileNotFoundError(f"Image not found: {image_path}")
     img = Image.open(image_path).convert("RGB")
     arr = np.array(img)
 
-    # resize preserving aspect ratio
+    # Only resize if image is significantly smaller than target
+    # Avoid resizing images that are already reasonably sized to preserve quality
     h, w = arr.shape[:2]
-    if w < target_width:
+    if w < target_width * 0.7:  # Only resize if width is less than 70% of target
         scale = target_width / float(w)
         new_w = int(w * scale)
         new_h = int(h * scale)
         arr = cv2.resize(arr, (new_w, new_h), interpolation=cv2.INTER_CUBIC)
-
-    gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
-
-    # preserve edges while denoising
-    denoised = cv2.bilateralFilter(gray, d=9, sigmaColor=75, sigmaSpace=75)
-
-    # CLAHE for local contrast enhancement
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(denoised)
-
-    # adaptive threshold to get binary image
-    th = cv2.adaptiveThreshold(enhanced, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                               cv2.THRESH_BINARY, 15, 4)
-
-    # morphological operations to close gaps in letters
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    closed = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel, iterations=1)
-    dilated = cv2.dilate(closed, kernel, iterations=1)
-
-    return Image.fromarray(dilated)
-def resize_image(image, width, height):
-    # Function to resize the image to the specified width and height
-    pass
-
-def convert_to_grayscale(image):
-    # Function to convert the image to grayscale
-    pass
-
-def apply_filter(image):
-    # Function to apply filters to enhance text recognition
-    pass
-
-def preprocess_image(image, width, height):
-    # Function to preprocess the image before OCR
-    image = resize_image(image, width, height)
-    image = convert_to_grayscale(image)
-    image = apply_filter(image)
-    return image
+        return Image.fromarray(arr)
+    
+    # Return original image if it's already large enough
+    return img
