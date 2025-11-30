@@ -1,4 +1,3 @@
-# ...existing code...
 from PIL import Image
 import pytesseract
 import cv2
@@ -126,16 +125,19 @@ class OCR:
         self.last_confidence = best_conf
         return best_text
     
-    def _ocr_with_psm_trials(self, image: Image.Image) -> tuple:
+    def ocr_with_best_psm(self, image: Image.Image, psm_modes: list = None) -> tuple:
         """Try different PSM modes and return best result with confidence.
         
         Args:
             image: PIL Image to process
+            psm_modes: list of PSM modes to try (default: [3, 6, 11, 13])
         
         Returns:
             tuple: (best_text, best_confidence)
         """
-        psm_modes = [3, 6, 11, 13]  # Different page segmentation modes
+        if psm_modes is None:
+            psm_modes = [3, 6, 11, 13]
+            
         best_text = ""
         best_conf = 0
         
@@ -153,13 +155,31 @@ class OCR:
                                                 config=config, output_type=pytesseract.Output.DICT)
                 confidences = [int(conf) for conf, text in zip(data['conf'], data['text']) 
                               if conf != '-1' and text.strip()]
-                avg_conf = sum(confidences) / len(confidences) if confidences else 0
+                
+                # Calculate score based on sum of confidences to favor more complete text
+                # Filter out very low confidence words to avoid accumulating noise
+                valid_confidences = [c for c in confidences if c > 10]
+                base_score = sum(valid_confidences)
                 
                 text = pytesseract.image_to_string(pil_img, lang=self.lang, config=config)
                 text = text.strip()
                 
-                if avg_conf > best_conf and text:
-                    best_conf = avg_conf
+                # Add bonus for each alphanumeric word to favor detecting more words
+                # (even if low confidence)
+                words = text.split()
+                word_count = sum(1 for w in words if any(c.isalnum() for c in w))
+                score = base_score + (word_count * 10)
+                
+                # Penalize text that has no alphanumeric characters (likely noise)
+                if not any(c.isalnum() for c in text):
+                    score = 0
+                
+                # Penalize very short text to avoid single-letter false positives
+                if len(text) < 3:
+                    score *= 0.3
+                
+                if score > best_conf and text:
+                    best_conf = score
                     best_text = text
             except Exception:
                 continue
@@ -260,4 +280,3 @@ class OCR:
                 texts.append(text)
         
         return " ".join(texts)
-# ...existing code...

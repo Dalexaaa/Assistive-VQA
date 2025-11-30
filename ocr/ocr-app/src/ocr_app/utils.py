@@ -330,9 +330,6 @@ def normalize_ocr(text: str, candidates: Iterable[str] | None = None) -> str:
         'TALIVATIN': 'TALKATIVE',
         'MERI': 'VERY',
         'MERI,': 'VERY',
-        'ROUTINELY': '',
-        'SHARES': '',
-        'COM': '',
     }
     
     # Apply explicit corrections first
@@ -345,16 +342,18 @@ def normalize_ocr(text: str, candidates: Iterable[str] | None = None) -> str:
     import re
     text_upper = re.sub(r'\s*,\s*', ' ', text_upper)
     
-    # Filter out URL artifacts and clean up
+    # Filter out very short fragments
     words = text_upper.split()
     filtered_words = []
     for w in words:
         w = w.strip()
         if not w:
             continue
-        # Skip URL components
-        if any(x in w.lower() for x in ['routinely', 'shares', 'com', '.com', 'http', 'www']):
+        
+        # Skip words that are only punctuation
+        if not any(c.isalnum() for c in w):
             continue
+            
         # Skip very short fragments
         if len(w) < 2:
             continue

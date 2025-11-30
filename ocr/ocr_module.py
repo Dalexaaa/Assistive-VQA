@@ -38,31 +38,8 @@ def extract_text(image_path):
             print(f"[OCR] Preprocessing failed, using direct load: {e}")
             preprocessed = Image.open(image_path).convert("RGB")
         
-        # Try multiple PSM modes and combine results
-        results = []
-        
-        # PSM 3 (automatic - default)
-        raw_text = ocr_engine.perform_ocr(preprocessed)
-        results.append(raw_text)
-        
-        # PSM 11 (sparse text - good for signs)
-        try:
-            psm11_ocr = OCR(psm=11)
-            psm11_text = psm11_ocr.perform_ocr(preprocessed)
-            results.append(psm11_text)
-        except:
-            pass
-        
-        # PSM 6 (single block - good for structured text)
-        try:
-            psm6_ocr = OCR(psm=6)
-            psm6_text = psm6_ocr.perform_ocr(preprocessed)
-            results.append(psm6_text)
-        except:
-            pass
-        
-        # Pick the result with most actual words (longest after stripping whitespace)
-        raw_text = max(results, key=lambda x: len(x.replace('\n', ' ').strip())) if results else raw_text
+        # Use the new confidence-based multi-PSM method
+        raw_text, confidence = ocr_engine.ocr_with_best_psm(preprocessed)
         
         # Apply spell correction and normalization
         corrected_text = normalize_ocr(raw_text)
