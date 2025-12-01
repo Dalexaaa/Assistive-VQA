@@ -72,12 +72,12 @@ assistive-vqa/
 │   └── README.md         ← Implementation guide
 │
 ├── ui/                   ← Flask API backend
-│   ├── app.py            ← Backend API (✅ Complete)
+│   ├── app.py            ← Backend API 
 │   ├── README.md         ← Full documentation
 │   ├── QUICK_START.md    ← Quick setup guide
 │   └── tests/            ← Test cases and results
 │
-├── ui-webapp/            ← Next.js frontend (✅ Complete)
+├── ui-webapp/            ← Next.js frontend
 │   ├── app/              ← Main page with UI
 │   ├── components/       ← React components
 │   └── components/ui/    ← shadcn/ui components
