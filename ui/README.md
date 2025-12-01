@@ -1,10 +1,5 @@
 # UI + Integration Module
 
-**Owner:** Person 2 (Rajini)  
-**Responsibilities:** User interface + integration logic between VQA and OCR modules
-
----
-
 ## Overview
 
 This module provides a modern web-based user interface and backend integration for the Assistive VQA system. It enables users to upload images and ask questions, automatically routing to either the VQA or OCR module based on the question type.
@@ -26,7 +21,7 @@ This module provides a modern web-based user interface and backend integration f
     ┌────┴────┐
     ▼         ▼
 ┌───────┐ ┌───────┐
-│  VQA  │ │  OCR  │  ← Modules by Person 1 & 3
+│  VQA  │ │  OCR  │  ← VQA and OCR modules
 └───────┘ └───────┘
 ```
 
@@ -50,10 +45,7 @@ pip install -r requirements.txt
 ### 2. Install Frontend Dependencies
 
 ```bash
-# Navigate to frontend directory
 cd ui-webapp
-
-# Install dependencies
 npm install
 ```
 
@@ -64,12 +56,12 @@ npm install
 python main.py
 ```
 
-The Flask API will start on `http://localhost:5000`
+The Flask API will start on `http://localhost:5001`
 
 ### 4. Run the Frontend (in a separate terminal)
 
 ```bash
-# From ui-webapp directory
+cd ui-webapp
 npm run dev
 ```
 
@@ -118,14 +110,16 @@ The `determine_module()` function in `ui/app.py` analyzes the question and route
 
 **Default:** VQA (if no clear match)
 
-### API Endpoints
+---
 
-#### `POST /api/query`
+## API Endpoints
+
+### `POST /api/query`
 Process an image and question.
 
 **Request:**
 ```bash
-curl -X POST http://localhost:5000/api/query \
+curl -X POST http://localhost:5001/api/query \
   -F "image=@path/to/image.jpg" \
   -F "question=What color is the car?"
 ```
@@ -140,7 +134,7 @@ curl -X POST http://localhost:5000/api/query \
 }
 ```
 
-#### `GET /api/health`
+### `GET /api/health`
 Health check endpoint.
 
 **Response:**
@@ -151,7 +145,7 @@ Health check endpoint.
 }
 ```
 
-#### `POST /api/test`
+### `POST /api/test`
 Check if VQA and OCR modules are available.
 
 **Response:**
@@ -172,9 +166,7 @@ Check if VQA and OCR modules are available.
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS v4
 - **UI Components:** shadcn/ui
-- **Key Libraries:**
-  - React 19
-  - Next.js Image optimization
+- **Key Libraries:** React 19
 
 ### Backend
 - **Framework:** Flask 3.0
@@ -190,27 +182,13 @@ Check if VQA and OCR modules are available.
 
 ### Frontend Components (`ui-webapp/components/`)
 
-#### `ImageUploader.tsx`
-- Handles image upload via click or drag-and-drop
-- Validates file type and size
-- Displays image preview
-- Uses Next.js Image component for optimization
-
-#### `QuestionInput.tsx`
-- Text input for questions
-- Example question suggestions
-- Enter key support for quick submission
-- Loading state handling
-
-#### `AnswerDisplay.tsx`
-- Displays answers with success styling
-- Shows error messages
-- Loading spinner during processing
-- "Start Over" functionality
+- **`ImageUploader.tsx`** - Handles image upload via click or drag-and-drop
+- **`QuestionInput.tsx`** - Text input for questions with example suggestions
+- **`AnswerDisplay.tsx`** - Displays answers with success/error styling
 
 ### Backend (`ui/app.py`)
 
-#### Key Functions:
+**Key Functions:**
 - `determine_module(question)` - Routes questions to appropriate module
 - `process_with_ocr(image_path, question)` - Calls OCR module
 - `process_with_vqa(image_path, question)` - Calls VQA module
@@ -218,110 +196,10 @@ Check if VQA and OCR modules are available.
 
 ---
 
-## Test Examples
-
-### Test Case 1: Text Recognition
-**Image:** Street sign with "STOP"  
-**Question:** "What does the sign say?"  
-**Expected Module:** OCR  
-**Expected Answer:** "STOP"
-
-### Test Case 2: Object Identification
-**Image:** Photo of a red car  
-**Question:** "What color is the car?"  
-**Expected Module:** VQA  
-**Expected Answer:** "The car is red"
-
-### Test Case 3: Counting
-**Image:** Group photo with 5 people  
-**Question:** "How many people are in this image?"  
-**Expected Module:** VQA  
-**Expected Answer:** "There are 5 people"
-
-### Test Case 4: Document Reading
-**Image:** Business card  
-**Question:** "What is the phone number?"  
-**Expected Module:** OCR  
-**Expected Answer:** (extracted phone number)
-
-### Test Case 5: Scene Description
-**Image:** Park scene  
-**Question:** "Describe what you see"  
-**Expected Module:** VQA  
-**Expected Answer:** (description of the park scene)
-
----
-
-## Development Notes
-
-### Running in Development Mode
-
-**Backend:**
-```bash
-# From project root
-python main.py
-# or
-cd ui && python app.py
-```
-
-**Frontend:**
-```bash
-cd ui-webapp
-npm run dev
-```
-
-### Building for Production
-
-**Frontend:**
-```bash
-cd ui-webapp
-npm run build
-npm start
-```
-
-**Backend:**
-Use a production WSGI server like Gunicorn:
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 ui.app:app
-```
-
-### Environment Variables
-
-Create a `.env.local` file in `ui-webapp/`:
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-```
-
----
-
-## Accessibility Features
-
-- High contrast UI elements
-- Keyboard navigation support
-- Screen reader friendly labels
-- Clear error messages
-- Large touch targets for mobile
-- Responsive design for all screen sizes
-
----
-
-## Future Enhancements
-
-- [ ] Camera capture support for mobile devices
-- [ ] Voice input for questions (speech-to-text)
-- [ ] Voice output for answers (text-to-speech)
-- [ ] History of previous queries
-- [ ] Multi-language support
-- [ ] Batch processing of multiple images
-- [ ] Export results to PDF/text file
-
----
-
 ## Troubleshooting
 
 ### "Failed to connect to the API"
-- Make sure Flask backend is running on port 5000
+- Make sure Flask backend is running on port 5001
 - Check for CORS issues in browser console
 - Verify `flask-cors` is installed
 
@@ -347,27 +225,20 @@ npm run dev
 
 ## Team Integration
 
-### For VQA Module Owner (Person 1):
-- Implement `vqa/vqa_model.py` with function:
-  ```python
-  def answer_question(image_path: str, question: str) -> str:
-      # Your VQA implementation
-      return answer
-  ```
+### For VQA Module:
+Implement `vqa/vqa_model.py` with function:
+```python
+def answer_question(image_path: str, question: str) -> str:
+    # Your VQA implementation
+    return answer
+```
 
-### For OCR Module Owner (Person 3):
-- Implement `ocr/ocr_module.py` with function:
-  ```python
-  def extract_text(image_path: str) -> str:
-      # Your OCR implementation
-      return extracted_text
-  ```
-
-The integration will automatically work once these functions are implemented!
+### For OCR Module:
+Implement `ocr/ocr_module.py` with function:
+```python
+def extract_text(image_path: str) -> str:
+    # Your OCR implementation
+    return extracted_text
+```
 
 ---
-
-## Contact
-
-**Module Owner:** Person 2 (Rajini)  
-**Last Updated:** November 24, 2025

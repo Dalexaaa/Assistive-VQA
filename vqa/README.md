@@ -208,7 +208,7 @@ Load the BLIP-2 model into memory. Called automatically by `answer_question()` i
 
 ```python
 from vqa.vqa_model import load_model
-load_model()  # GPU memory allocated here
+load_model() 
 ```
 
 #### `answer_question(image_path: str, question: str) → str`
@@ -225,7 +225,6 @@ Answer a question about an image.
 from vqa.vqa_model import answer_question
 
 answer = answer_question("image.jpg", "What is the weather?")
-# Output: "The weather is sunny with clear blue skies"
 ```
 
 #### `unload_model() → None`
@@ -234,7 +233,7 @@ Free GPU memory and unload the model.
 
 ```python
 from vqa.vqa_model import unload_model
-unload_model()  # GPU memory released
+unload_model()
 ```
 
 ---
@@ -297,37 +296,6 @@ Depends on image complexity and question clarity:
 
 ---
 
-## Configuration
-
-### Environment Variables
-
-**Windows (PowerShell):**
-```powershell
-$env:HF_HOME = "C:\Models"                          # Model cache location
-$env:HF_HUB_DISABLE_SYMLINKS_WARNING = "1"         # Suppress Windows symlink warnings
-$env:TRANSFORMERS_VERBOSITY = "error"               # Log level
-```
-
-**macOS/Linux (Bash):**
-```bash
-export HF_HOME="$HOME/models"                      # Model cache location
-export HF_HUB_DISABLE_SYMLINKS_WARNING="1"         # Optional
-export TRANSFORMERS_VERBOSITY="error"              # Log level: quiet, error, warning, info, debug
-```
-
-### Model Configuration
-
-To use a different BLIP-2 variant, edit `vqa_model.py`:
-
-```python
-# Line ~15 in vqa_model.py
-MODEL_ID = "Salesforce/blip2-opt-2.7b"  # Change to:
-# "Salesforce/blip2-opt-6.7b"  # Larger model, slower but better quality
-# "Salesforce/blip2-opt-2.7b-ib"  # Intermediate-budget variant
-```
-
----
-
 ## Troubleshooting
 
 ### Common Issues
@@ -350,24 +318,6 @@ ping -c 3 huggingface.co
 pip install huggingface-hub
 huggingface-cli login
 python vqa/setup_vqa.py
-```
-
-#### CUDA Out of Memory (OOM)
-
-**Problem:** `RuntimeError: CUDA out of memory`
-
-**Solution:**
-```python
-# Option 1: Use CPU
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-
-# Option 2: Clear cache before inference
-import torch
-torch.cuda.empty_cache()
-
-# Option 3: Use a smaller model variant
-# Edit vqa_model.py, change MODEL_ID to "Salesforce/blip2-opt-2.7b"
 ```
 
 #### Model Not Found / Import Errors
@@ -406,18 +356,9 @@ python -m pip install -r vqa/requirements.txt
    ```
 3. If on CPU, reinstall PyTorch for your CUDA version (see [Install Dependencies](#1-install-dependencies))
 
-#### Strange Answers or Question Echoing
-
-**Problem:** Model answers include the question text
-
-**Solution:** This is normal for BLIP-2. The `answer_question()` function includes post-processing to strip echoes. If echoes persist:
-
-1. Update `vqa/vqa_model.py` to `vqa_model.py` line ~60 (check post-processing logic)
-2. Increase `max_new_tokens` or adjust beam search parameters
-
 ---
 
-## Testing & Evaluation
+## Testing & Evaluation 
 
 See [vqa/testing/README.md](testing/README.md) for detailed testing instructions.
 
@@ -480,56 +421,5 @@ for image_path in glob.glob("data/images/*.jpg"):
 
 unload_model()
 ```
-
----
-
-## Requirements
-
-### System Requirements
-
-**Operating System:**
-- Windows 10/11 (64-bit)
-- macOS 11+ (Intel or Apple Silicon)
-- Linux (Ubuntu 18.04+, etc.)
-
-**Hardware:**
-- **Python:** 3.8+
-- **RAM:** 8 GB minimum (16 GB recommended)
-- **GPU (optional but recommended):**
-  - **NVIDIA:** CUDA 11.8+ with cuDNN 8.6+, 6 GB VRAM minimum
-  - **Apple Silicon:** Built-in GPU support (M1/M2/M3)
-  - **No GPU:** CPU fallback supported (~5-10s per image)
-
-**Disk Space:**
-- Model cache: ~4-6 GB
-- Python packages: ~1-2 GB
-- Evaluation results: ~100-500 MB
-
-### Python Dependencies
-
-See `requirements.txt` for the complete list and installation instructions.
-
-**Core Packages:**
-- **torch** (≥2.0) — Deep learning framework (install separately per platform)
-- **torchvision** — Computer vision utilities
-- **transformers** (≥4.30) — Hugging Face model hub and inference
-- **accelerate** — Distributed training & mixed precision
-- **Pillow** (≥10.0) — Image I/O and processing
-- **numpy** (≥1.24) — Numerical computing
-- **scipy** (≥1.10) — Scientific metrics
-
-**Development & Testing:**
-- **pytest** (≥7.0) — Unit testing framework
-- **pytest-cov** — Code coverage reporting
-- **psutil** — System resource monitoring
-
----
-
-## References
-
-- **BLIP-2 Model:** https://huggingface.co/Salesforce/blip2-opt-2.7b
-- **Hugging Face Transformers:** https://huggingface.co/docs/transformers/
-- **PyTorch:** https://pytorch.org/
-- **BLIP-2 Paper:** https://arxiv.org/abs/2301.12597
 
 ---

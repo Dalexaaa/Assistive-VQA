@@ -1,6 +1,0 @@
-#Tesseract-OCR
-pytesseract
-opencv-python
-pillow
-numpy
-pytest

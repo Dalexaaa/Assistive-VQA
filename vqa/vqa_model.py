@@ -1,11 +1,10 @@
 """
-VQA Module - Visual Question Answering using BLIP
-Implements visual question answering using the BLIP model (memory-efficient version).
-Uses BLIP-base instead of BLIP-2 for better CPU/low-memory compatibility.
+VQA Module - Visual Question Answering using BLIP-2
+Implements visual question answering using the BLIP-2-opt-2.7b model.
 """
 
 import torch
-from transformers import BlipProcessor, BlipForConditionalGeneration
+from transformers import Blip2Processor, Blip2ForConditionalGeneration
 from PIL import Image
 import os
 from pathlib import Path
@@ -52,30 +51,30 @@ def load_model():
     if _model is not None:
         return _model, _processor, _device
     
-    print("Loading BLIP-2-opt-2.7b model (lightweight CPU version)...")
+    print("Loading BLIP-2-opt-2.7b model...")
     
     device = get_device()
-    # Use smaller BLIP model for CPU/low memory systems
-    model_id = "Salesforce/blip-image-captioning-base"  # Much smaller: ~990MB vs 5GB
+    model_id = "Salesforce/blip2-opt-2.7b"
     
     try:
-        # Import BLIP (not BLIP-2) for lighter memory footprint
-        from transformers import BlipProcessor, BlipForConditionalGeneration
-        
         # Load processor
-        _processor = BlipProcessor.from_pretrained(model_id)
+        _processor = Blip2Processor.from_pretrained(model_id)
         
-        # Load model with memory-efficient settings
-        _model = BlipForConditionalGeneration.from_pretrained(
-            model_id,
-            torch_dtype=torch.float32,  # Use float32 for CPU
-            low_cpu_mem_usage=True      # Enable memory-efficient loading
-        )
+        # Load model with appropriate settings
+        if device.type == "cuda":
+            _model = Blip2ForConditionalGeneration.from_pretrained(
+                model_id,
+                torch_dtype=torch.float16,
+                device_map="auto"
+            )
+        else:
+            _model = Blip2ForConditionalGeneration.from_pretrained(
+                model_id,
+                device_map=device
+            )
         
-        _model.to(device)
         _model.eval()
-        print(f"BLIP model loaded successfully on {device}")
-        print(f"Model size: ~990MB (memory-efficient for CPU)")
+        print(f"Model loaded successfully on {device}")
         return _model, _processor, device
         
     except Exception as e:
@@ -115,39 +114,38 @@ def answer_question(image_path: str, question: str) -> str:
         # Load and prepare image
         image = Image.open(image_path).convert('RGB')
         
-        # BLIP works better with conditional generation (no text prompt for questions)
-        # Use unconditional captioning, then answer the question based on caption
-        
-        # Prepare inputs for BLIP - image only
-        inputs = processor(images=image, return_tensors="pt").to(device)
+        # Prepare a clearer instruction-style prompt to avoid the model echoing the question
+        prompt = f"Question: {question}\nAnswer:"
 
-        # Generate caption/answer with memory-efficient parameters
+        # Prepare inputs for BLIP-2
+        inputs = processor(images=image, text=prompt, return_tensors="pt").to(device)
+
+        # Generate answer with safer decoding parameters
+        # - use max_new_tokens to limit generated tokens (preferable to max_length)
+        # - use beam search for more stable outputs
+        # - prevent short n-gram repetition
         with torch.no_grad():
             outputs = model.generate(
                 **inputs,
-                max_length=50,
+                max_new_tokens=64,
                 num_beams=3,
-                early_stopping=True,
-                min_length=5
+                no_repeat_ngram_size=3,
+                early_stopping=True
             )
 
-        # Decode the generated text
-        generated_text = processor.decode(outputs[0], skip_special_tokens=True).strip()
+        # Decode the answer text
+        # Use batch decode for consistency
+        answer = processor.batch_decode(outputs, skip_special_tokens=True)[0].strip()
+
+        # Post-process: if model echoed the question/prompt, remove the prompt portion
+        if answer.lower().startswith(f"question: {question.lower()}"):
+            # remove the repeated question portion
+            answer = answer[len(f"question: {question}"):].strip(' :\n')
+        # If the model left the literal 'Answer:' marker, strip it
+        if answer.lower().startswith("answer:"):
+            answer = answer[len("answer:"):].strip(' :\n')
         
-        # For specific questions, try to extract relevant info from caption
-        question_lower = question.lower()
-        
-        # If asking about color, try to extract color words
-        if 'color' in question_lower or 'colour' in question_lower:
-            color_words = ['red', 'blue', 'green', 'yellow', 'black', 'white', 
-                          'gray', 'grey', 'orange', 'purple', 'pink', 'brown',
-                          'silver', 'gold', 'dark', 'light']
-            for word in color_words:
-                if word in generated_text.lower():
-                    return f"The color is {word}."
-        
-        # Otherwise return the full caption/description
-        return generated_text if generated_text else "Unable to generate a response."
+        return answer if answer else "Unable to generate a response."
         
     except FileNotFoundError as e:
         return f"Error: {str(e)}"
@@ -203,4 +201,3 @@ if __name__ == "__main__":
     else:
         print(f"Test image not found: {test_image}")
         print("Usage: python vqa_model.py <image_path> <question>")
-
