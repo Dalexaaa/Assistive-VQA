@@ -28,18 +28,38 @@ def extract_text(image_path):
         str: The extracted text from the image
     """
     try:
-        # Initialize OCR engine
-        ocr_engine = OCR()
+        # Try multiple PSM modes and pick longest result
+        results = []
         
-        # Preprocess the image
+        # PSM 3 (automatic - default)
         try:
-            preprocessed = preprocess_image(image_path)
+            ocr3 = OCR(psm=3)
+            text3 = ocr3.extract_text(image_path)
+            results.append(text3)
         except Exception as e:
-            print(f"[OCR] Preprocessing failed, using direct load: {e}")
-            preprocessed = Image.open(image_path).convert("RGB")
+            print(f"[OCR] PSM 3 failed: {e}")
         
-        # Use the new confidence-based multi-PSM method
-        raw_text, confidence = ocr_engine.ocr_with_best_psm(preprocessed)
+        # PSM 11 (sparse text - good for signs)
+        try:
+            ocr11 = OCR(psm=11)
+            text11 = ocr11.extract_text(image_path)
+            results.append(text11)
+        except Exception as e:
+            print(f"[OCR] PSM 11 failed: {e}")
+        
+        # PSM 6 (single block - good for structured text)
+        try:
+            ocr6 = OCR(psm=6)
+            text6 = ocr6.extract_text(image_path)
+            results.append(text6)
+        except Exception as e:
+            print(f"[OCR] PSM 6 failed: {e}")
+        
+        if not results:
+            return "No text found"
+        
+        # Pick the longest result
+        raw_text = max(results, key=lambda x: len(x.replace('\n', ' ').strip()))
         
         # Apply spell correction and normalization
         corrected_text = normalize_ocr(raw_text)
@@ -47,7 +67,8 @@ def extract_text(image_path):
         return corrected_text if corrected_text else "No text found"
         
     except Exception as e:
-        return f"OCR Error: {str(e)}"
+        import traceback
+        return f"OCR Error: {str(e)}\n{traceback.format_exc()}"
 
 
 if __name__ == "__main__":
