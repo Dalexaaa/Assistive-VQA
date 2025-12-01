@@ -201,4 +201,3 @@ if __name__ == "__main__":
     else:
         print(f"Test image not found: {test_image}")
         print("Usage: python vqa_model.py <image_path> <question>")
-

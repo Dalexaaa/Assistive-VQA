@@ -10,7 +10,7 @@ helping visually impaired users understand their surroundings.
 |------|---------|-------------|
 | Person 1 | Abby | VQA + Repository Setup |
 | Person 2 | Mirac | UI + Integration of VQA and OCR |
-| Person 3 | Rajini | OCR + Final Presentation and Demo |
+| Person 3 | Rajini | OCR + Final Report |
 
 ---
 
@@ -97,20 +97,62 @@ assistive-vqa/
 
 ---
 
+## System Requirements
+
+- **Python:** 3.8 or higher
+- **Node.js:** 18.0 or higher (for Next.js frontend)
+- **Tesseract OCR:** Must be installed separately on your system
+  - Windows: [Download installer](https://github.com/UB-Mannheim/tesseract/wiki)
+  - macOS: `brew install tesseract`
+  - Linux: `sudo apt-get install tesseract-ocr`
+
+---
+
 ## Installation
 
-1. Clone the repository:
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/Dalexaaa/Assistive-VQA.git
 cd Assistive-VQA
 ```
 
-2. Install Python dependencies:
+### 2. Set Up Python Environment (Recommended)
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+```
+
+### 3. Install PyTorch (REQUIRED - Install First!)
+
+PyTorch must be installed **before** other dependencies. Choose the appropriate command for your system:
+
+**CPU-only (No GPU):**
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+```
+
+**NVIDIA GPU with CUDA 12.1 (Windows/Linux):**
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+**Apple Silicon M1/M2/M3 (macOS):**
+```bash
+pip install torch torchvision torchaudio
+```
+
+### 4. Install Python Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Install frontend dependencies:
+### 5. Install Frontend Dependencies
 ```bash
 cd ui-webapp
 npm install
@@ -146,34 +188,6 @@ cd ui-webapp && npm run dev
 
 ---
 
-## Current Status
-
-### ✅ Complete (Person 2 - Rajini)
-- **UI/Frontend:** Modern Next.js web app with shadcn/ui components
-- **Backend API:** Flask server with image upload and routing
-- **Integration Logic:** Smart routing between OCR and VQA modules
-- **Documentation:** Complete guides for all modules
-
-### 🔄 To Be Completed
-- **VQA Module (Person 1):** Implement `answer_question()` - See `/vqa/README.md`
-- **OCR Module (Person 3):** Implement `extract_text()` - See `/ocr/README.md`
-
----
-
-## For Team Members
-
-### Person 1 (Abby) - VQA Module
-**Task:** Implement `vqa/vqa_model.py` with `answer_question()` function.  
-**Guide:** See `/vqa/README.md` for complete instructions.
-
-### Person 3 - OCR Module
-**Task:** Implement `ocr/ocr_module.py` with `extract_text()` function.  
-**Guide:** See `/ocr/README.md` for complete instructions.
-
-**No integration work needed!** Just implement your functions and the UI will automatically work.
-
----
-
 ## Documentation
 
 - **UI Module:** `/ui/README.md` - Complete UI documentation
@@ -184,53 +198,35 @@ cd ui-webapp && npm run dev
 
 ---
 
-## Milestone Deadlines
+## Testing
 
-| Phase | Due Date | Status |
-|--------|-----------|--------|
-| Modules (VQA, OCR, UI) | **Nov 19** | UI ✅ Complete |
-| Integration | **Nov 26** | Ready for testing |
-| Final Repo + Demo | **Dec 1** | Pending |
+Each module includes comprehensive testing:
 
----
+- **VQA Module:** Test cases in `/vqa/test_vqa.py`
+- **OCR Module:** Test cases in `/ocr/ocr-app/`
+- **UI/Integration:** Test cases in `/ui/tests/`
+- **Sample Data:** Test images in `/data/samples/`
 
-## Usage
-
-1. Run the complete system:
+Run tests individually:
 ```bash
-python main.py
-```
-
-2. Or test each module individually:
-```bash
-python vqa/vqa_model.py
+python vqa/test_vqa.py
 python ocr/ocr_module.py
 ```
 
-# Testing
-Each member must:
-- Provide 3–5 test examples in their own folder (/vqa, /ocr, /ui).
-- Update the /data/samples/ directory with shared test images.
-- Document results and examples in their module’s README.
-
-# Integration
-Integration happens in two layers:
-- route(question) decides whether to use OCR or VQA.
-- main.py or app.py connects both and displays the response through the UI.
-
-# Evaluation
-A simple evaluation is included in /docs/eval.md:
-- 10 total test cases (mix of text and visual questions)
-- Latency, accuracy, and clarity of results
-
-## Folder Responsabilities
-Each folder has its own README.md with:
-* Purpose of the module
-* Setup & usage instructions
-* Examples and screenshots
-
 ---
 
+## System Architecture
+
+The system uses a smart routing mechanism to determine whether to use OCR or VQA:
+
+1. **User Input:** Image + Question via Next.js frontend
+2. **Flask Backend (`ui/app.py`):** Receives request and analyzes question
+3. **Smart Routing:** Determines module based on question keywords:
+   - Text-related questions ("read", "text", "says") → **OCR Module**
+   - Visual questions ("what", "describe", "color") → **VQA Module**
+4. **Response:** Answer returned to frontend and displayed to user
+
+---
 
 ## Technology Stack
 
@@ -245,9 +241,10 @@ Each folder has its own README.md with:
 - **Image Processing:** Pillow
 - **CORS:** flask-cors
 
-### AI/ML (To be integrated)
-- **VQA:** BLIP-2, LLaVA, or similar
-- **OCR:** Tesseract + OpenCV
+### AI/ML
+- **VQA:** BLIP-2 (Salesforce) - Visual Question Answering
+- **OCR:** Tesseract + OpenCV - Text extraction with preprocessing
+
 
 ---
 

@@ -181,14 +181,37 @@ def query_image():
         else:
             return jsonify({'error': 'No image provided'}), 400
         
-        # Determine which module to use
+        # Always run OCR first so we can surface detected text and optionally feed it to VQA
+        ocr_text = process_with_ocr(image_path, question)
+
+        # Build the VQA prompt. If OCR finds text, append it so the vision model has context.
+        vqa_question = question.strip()
+        normalized_ocr = (ocr_text or '').strip()
+        if normalized_ocr and not normalized_ocr.lower().startswith(('ocr error', 'vqa error')) and 'no text found' not in normalized_ocr.lower():
+            vqa_question = f"{vqa_question}\n\nDetected text in image: {normalized_ocr}"
+
+        vqa_answer = process_with_vqa(image_path, vqa_question)
+
+        # Determine which module should supply the primary answer based on the original question
         module_type = determine_module(question)
-        
-        # Process with appropriate module
-        if module_type == 'ocr':
-            answer = process_with_ocr(image_path, question)
-        else:
-            answer = process_with_vqa(image_path, question)
+        answer = ocr_text if module_type == 'ocr' else vqa_answer
+
+        # Fallback if the preferred module failed or returned nothing useful
+        def _is_valid_response(value: str | None) -> bool:
+            if not value:
+                return False
+            lowered = value.lower()
+            return not (lowered.startswith('ocr error') or lowered.startswith('vqa error'))
+
+        if module_type == 'ocr' and not _is_valid_response(ocr_text) and _is_valid_response(vqa_answer):
+            module_type = 'vqa'
+            answer = vqa_answer
+        elif module_type == 'vqa' and not _is_valid_response(vqa_answer) and _is_valid_response(ocr_text):
+            module_type = 'ocr'
+            answer = ocr_text
+        elif not _is_valid_response(answer):
+            # fall back to whichever response contains more information
+            answer = ocr_text or vqa_answer or "Unable to process the image."
         
         # Clean up temporary file
         try:
@@ -201,7 +224,12 @@ def query_image():
             'success': True,
             'answer': answer,
             'module': module_type,
-            'question': question
+            'question': question,
+            'details': {
+                'ocr_text': ocr_text,
+                'vqa_answer': vqa_answer,
+                'vqa_question_used': vqa_question
+            }
         })
         
     except Exception as e:

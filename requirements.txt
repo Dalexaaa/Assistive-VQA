@@ -1,19 +1,57 @@
-# Flask Backend Dependencies
-flask==3.0.0
-flask-cors==4.0.0
-Pillow==10.1.0
-werkzeug==3.0.1
+# IMPORTANT: PYTORCH INSTALLATION (Install FIRST, before this file)
+# PyTorch is platform-specific and must be installed separately BEFORE
+# running pip install -r requirements.txt
+#
+# Choose ONE of the following based on your system:
+#
+# 1. CPU-only (Windows/Mac/Linux - no GPU):
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#
+# 2. NVIDIA GPU with CUDA 12.1 (Windows/Linux):
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+#
+# 3. NVIDIA GPU with CUDA 11.8 (Windows/Linux):
+#    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+# 4. Apple Silicon M1/M2/M3 (macOS):
+#    pip install torch torchvision torchaudio
+#
+# After installing PyTorch, run: pip install -r requirements.txt
 
-# OCR Dependencies (for Person 3)
-# pytesseract==0.3.10
-# opencv-python==4.8.1.78
+# FLASK BACKEND DEPENDENCIES (UI/Integration Module)
+flask>=3.1.0
+flask-cors>=6.0.0
+werkzeug>=3.0.0
 
-# VQA Dependencies (for Person 1)
-torch==2.1.0
-torchvision==0.16.0
-transformers==4.35.2
-accelerate==0.24.1
+# VQA DEPENDENCIES
+# Hugging Face Transformers & Model Hub
+transformers>=4.35.0
+accelerate>=1.0.0
+huggingface-hub>=0.20.0
 
-# Common utilities
-numpy==1.26.2
-requests==2.31.0
+# Scientific Computing
+scipy>=1.10.0
+
+# Performance & Monitoring
+psutil>=5.9.0
+
+# OCR (Optical Character Recognition) DEPENDENCIES
+# NOTE: Tesseract-OCR must be installed separately on your system
+# Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki
+# Mac: brew install tesseract
+# Linux: sudo apt-get install tesseract-ocr
+pytesseract>=0.3.10
+opencv-python>=4.8.0
+
+# Image Processing
+Pillow>=10.0.0
+
+# Numerical Computing
+numpy>=1.24.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# TESTING & DEVELOPMENT DEPENDENCIES
+pytest>=7.0.0
+pytest-cov>=4.0.0

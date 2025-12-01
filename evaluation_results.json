@@ -1,0 +1,162 @@
+{
+  "timestamp": "2025-12-01T02:10:59.881208",
+  "summary": {
+    "vqa": {
+      "accuracy": 60.0,
+      "avg_time": 10.929911041259766,
+      "total_tests": 5,
+      "correct": 3
+    },
+    "ocr": {
+      "accuracy": 60.0,
+      "avg_time": 1.1980969905853271,
+      "total_tests": 5,
+      "correct": 3
+    },
+    "routing": {
+      "accuracy": 100.0,
+      "total_tests": 10,
+      "correct": 10
+    },
+    "overall": {
+      "total_tests": 10,
+      "total_correct": 6
+    }
+  },
+  "vqa_details": [
+    {
+      "correct": true,
+      "response_time": 29.805572271347046,
+      "question": "What is the car color?",
+      "expected": "red",
+      "actual": "Red"
+    },
+    {
+      "correct": true,
+      "response_time": 7.369953870773315,
+      "question": "What is the image?",
+      "expected": "Niagara Falls",
+      "actual": "The image is of niagara falls in canada"
+    },
+    {
+      "correct": true,
+      "response_time": 4.73132586479187,
+      "question": "What is the sign color?",
+      "expected": "red",
+      "actual": "Red stop sign"
+    },
+    {
+      "correct": false,
+      "response_time": 5.301958799362183,
+      "question": "What is the background color?",
+      "expected": "golden",
+      "actual": "The background color is gold"
+    },
+    {
+      "correct": false,
+      "response_time": 7.440744400024414,
+      "question": "What is the image?",
+      "expected": "There is a motocycle",
+      "actual": "The image is of a person riding a motorcycle on a road"
+    }
+  ],
+  "ocr_details": [
+    {
+      "correct": true,
+      "response_time": 1.2810957431793213,
+      "question": "What does the sign say?",
+      "expected": "STOP",
+      "actual": "STOP"
+    },
+    {
+      "correct": true,
+      "response_time": 1.307873010635376,
+      "question": "What does the text say?",
+      "expected": "SHORT Funny HAPPY BIRTHDAY WISHES ROUTINELYSHARES.COM",
+      "actual": "SHORT FUNNY HAPPY BIRTHDAY WISHES ~~ --"
+    },
+    {
+      "correct": true,
+      "response_time": 1.063873291015625,
+      "question": "What does the text say?",
+      "expected": "CAUTION VERY TALKATIVE",
+      "actual": "CAUTION VERY TALKATIVE"
+    },
+    {
+      "correct": false,
+      "response_time": 0.7534468173980713,
+      "question": "What does the text say?",
+      "expected": "Best. Summer. Ever.",
+      "actual": "EE AE AA CE PEE EE PIVEN"
+    },
+    {
+      "correct": false,
+      "response_time": 1.5841960906982422,
+      "question": "What does the text say?",
+      "expected": "GUIDE ULTIME 2024",
+      "actual": "=N 020K NS ATT OT NZ 7. SE \u2018= SS <A NL AA EY EEE SS SSG} NG CSS SEE BS SO HE 2) CRE NE"
+    }
+  ],
+  "routing_details": [
+    {
+      "correct": true,
+      "question": "What does the sign say?",
+      "expected": "ocr",
+      "actual": "ocr"
+    },
+    {
+      "correct": true,
+      "question": "What does the text say?",
+      "expected": "ocr",
+      "actual": "ocr"
+    },
+    {
+      "correct": true,
+      "question": "What does the text say?",
+      "expected": "ocr",
+      "actual": "ocr"
+    },
+    {
+      "correct": true,
+      "question": "What does the text say?",
+      "expected": "ocr",
+      "actual": "ocr"
+    },
+    {
+      "correct": true,
+      "question": "What is the car color?",
+      "expected": "vqa",
+      "actual": "vqa"
+    },
+    {
+      "correct": true,
+      "question": "What is the image?",
+      "expected": "vqa",
+      "actual": "vqa"
+    },
+    {
+      "correct": true,
+      "question": "What is the sign color?",
+      "expected": "vqa",
+      "actual": "vqa"
+    },
+    {
+      "correct": true,
+      "question": "What is the background color?",
+      "expected": "vqa",
+      "actual": "vqa"
+    },
+    {
+      "correct": true,
+      "question": "What is the image?",
+      "expected": "vqa",
+      "actual": "vqa"
+    },
+    {
+      "correct": true,
+      "question": "What does the text say?",
+      "expected": "ocr",
+      "actual": "ocr"
+    }
+  ]
+}

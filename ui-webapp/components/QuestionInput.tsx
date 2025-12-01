@@ -2,6 +2,7 @@
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { useMemo } from 'react';
 
 interface QuestionInputProps {
   value: string;
@@ -19,6 +20,8 @@ const exampleQuestions = [
   "Read the text from this document",
 ];
 
+const MAX_CHARS = 240;
+
 export function QuestionInput({ value, onChange, onSubmit, loading, disabled }: QuestionInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -29,16 +32,32 @@ export function QuestionInput({ value, onChange, onSubmit, loading, disabled }: 
     }
   };
 
+  const remaining = useMemo(() => Math.max(0, MAX_CHARS - value.length), [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const nextValue = e.target.value.slice(0, MAX_CHARS);
+    onChange(nextValue);
+  };
+
   return (
     <div className="space-y-4">
       <Textarea
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder="Type your question here... (e.g., What's in this image? or What does the text say?)"
-        className="min-h-[100px] resize-none"
+        className="min-h-[120px] resize-none"
         disabled={disabled || loading}
+        maxLength={MAX_CHARS}
+        aria-describedby="question-helper"
       />
+
+      <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400" id="question-helper">
+        <span>Press Enter to submit or Shift + Enter for a new line</span>
+        <span className={remaining < 20 ? 'text-red-500 dark:text-red-400 font-medium' : ''}>
+          {remaining} characters left
+        </span>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <p className="text-xs text-neutral-500 dark:text-neutral-400 w-full mb-1">Example questions:</p>

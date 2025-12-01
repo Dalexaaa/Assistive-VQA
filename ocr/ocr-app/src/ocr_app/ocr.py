@@ -1,3 +1,4 @@
+# ...existing code...
 from PIL import Image
 import pytesseract
 import cv2
@@ -53,17 +54,36 @@ class OCR:
         """Load an image from the specified path and return a PIL Image (RGB)."""
         if not os.path.isfile(image_path):
             raise FileNotFoundError(f"Image not found: {image_path}")
-        return Image.open(image_path).convert("RGB")
+        img = Image.open(image_path).convert("RGB")
+        print(f"[DEBUG] Loaded image type: {type(img)}, size: {img.size}, mode: {img.mode}")
+        return img
 
     def perform_ocr(self, image: Image.Image) -> str:
         """Perform OCR on the given PIL Image and return extracted text."""
-        # convert to numpy + grayscale
-        arr = np.array(image)
-        gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+        # Ensure image is PIL Image
+        if not isinstance(image, Image.Image):
+            raise ValueError(f"Expected PIL Image, got {type(image)}")
+        
+        # Convert to numpy array with explicit dtype for NumPy 2.x compatibility
+        arr = np.asarray(image, dtype=np.uint8)
+        
+        # Convert to grayscale
+        if len(arr.shape) == 3 and arr.shape[2] == 3:
+            # Ensure contiguous array for OpenCV
+            arr = np.ascontiguousarray(arr)
+            gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+        elif len(arr.shape) == 2:
+            gray = arr
+        else:
+            # Fallback to PIL conversion
+            gray = np.array(image.convert('L'), dtype=np.uint8)
 
-        # denoise and enhance
+        # Ensure gray is contiguous
+        gray = np.ascontiguousarray(gray, dtype=np.uint8)
+        
+        # Denoise and enhance
         denoised = cv2.fastNlMeansDenoising(gray, h=10)
-        # adaptive threshold to improve contrast for OCR
+        # Adaptive threshold to improve contrast for OCR
         th = cv2.adaptiveThreshold(denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                    cv2.THRESH_BINARY, 11, 2)
 
@@ -125,19 +145,16 @@ class OCR:
         self.last_confidence = best_conf
         return best_text
     
-    def ocr_with_best_psm(self, image: Image.Image, psm_modes: list = None) -> tuple:
+    def _ocr_with_psm_trials(self, image: Image.Image) -> tuple:
         """Try different PSM modes and return best result with confidence.
         
         Args:
             image: PIL Image to process
-            psm_modes: list of PSM modes to try (default: [3, 6, 11, 13])
         
         Returns:
             tuple: (best_text, best_confidence)
         """
-        if psm_modes is None:
-            psm_modes = [3, 6, 11, 13]
-            
+        psm_modes = [3, 6, 11, 13]  # Different page segmentation modes
         best_text = ""
         best_conf = 0
         
@@ -155,31 +172,13 @@ class OCR:
                                                 config=config, output_type=pytesseract.Output.DICT)
                 confidences = [int(conf) for conf, text in zip(data['conf'], data['text']) 
                               if conf != '-1' and text.strip()]
-                
-                # Calculate score based on sum of confidences to favor more complete text
-                # Filter out very low confidence words to avoid accumulating noise
-                valid_confidences = [c for c in confidences if c > 10]
-                base_score = sum(valid_confidences)
+                avg_conf = sum(confidences) / len(confidences) if confidences else 0
                 
                 text = pytesseract.image_to_string(pil_img, lang=self.lang, config=config)
                 text = text.strip()
                 
-                # Add bonus for each alphanumeric word to favor detecting more words
-                # (even if low confidence)
-                words = text.split()
-                word_count = sum(1 for w in words if any(c.isalnum() for c in w))
-                score = base_score + (word_count * 10)
-                
-                # Penalize text that has no alphanumeric characters (likely noise)
-                if not any(c.isalnum() for c in text):
-                    score = 0
-                
-                # Penalize very short text to avoid single-letter false positives
-                if len(text) < 3:
-                    score *= 0.3
-                
-                if score > best_conf and text:
-                    best_conf = score
+                if avg_conf > best_conf and text:
+                    best_conf = avg_conf
                     best_text = text
             except Exception:
                 continue
@@ -280,3 +279,4 @@ class OCR:
                 texts.append(text)
         
         return " ".join(texts)
+# ...existing code...
