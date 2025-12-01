@@ -28,41 +28,38 @@ def extract_text(image_path):
         str: The extracted text from the image
     """
     try:
-        # Initialize OCR engine
-        ocr_engine = OCR()
-        
-        # Preprocess the image
-        try:
-            preprocessed = preprocess_image(image_path)
-        except Exception as e:
-            print(f"[OCR] Preprocessing failed, using direct load: {e}")
-            preprocessed = Image.open(image_path).convert("RGB")
-        
-        # Try multiple PSM modes and combine results
+        # Try multiple PSM modes and pick longest result
         results = []
         
         # PSM 3 (automatic - default)
-        raw_text = ocr_engine.perform_ocr(preprocessed)
-        results.append(raw_text)
+        try:
+            ocr3 = OCR(psm=3)
+            text3 = ocr3.extract_text(image_path)
+            results.append(text3)
+        except Exception as e:
+            print(f"[OCR] PSM 3 failed: {e}")
         
         # PSM 11 (sparse text - good for signs)
         try:
-            psm11_ocr = OCR(psm=11)
-            psm11_text = psm11_ocr.perform_ocr(preprocessed)
-            results.append(psm11_text)
-        except:
-            pass
+            ocr11 = OCR(psm=11)
+            text11 = ocr11.extract_text(image_path)
+            results.append(text11)
+        except Exception as e:
+            print(f"[OCR] PSM 11 failed: {e}")
         
         # PSM 6 (single block - good for structured text)
         try:
-            psm6_ocr = OCR(psm=6)
-            psm6_text = psm6_ocr.perform_ocr(preprocessed)
-            results.append(psm6_text)
-        except:
-            pass
+            ocr6 = OCR(psm=6)
+            text6 = ocr6.extract_text(image_path)
+            results.append(text6)
+        except Exception as e:
+            print(f"[OCR] PSM 6 failed: {e}")
         
-        # Pick the result with most actual words (longest after stripping whitespace)
-        raw_text = max(results, key=lambda x: len(x.replace('\n', ' ').strip())) if results else raw_text
+        if not results:
+            return "No text found"
+        
+        # Pick the longest result
+        raw_text = max(results, key=lambda x: len(x.replace('\n', ' ').strip()))
         
         # Apply spell correction and normalization
         corrected_text = normalize_ocr(raw_text)
@@ -70,7 +67,8 @@ def extract_text(image_path):
         return corrected_text if corrected_text else "No text found"
         
     except Exception as e:
-        return f"OCR Error: {str(e)}"
+        import traceback
+        return f"OCR Error: {str(e)}\n{traceback.format_exc()}"
 
 
 if __name__ == "__main__":

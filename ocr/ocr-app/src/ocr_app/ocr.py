@@ -54,17 +54,36 @@ class OCR:
         """Load an image from the specified path and return a PIL Image (RGB)."""
         if not os.path.isfile(image_path):
             raise FileNotFoundError(f"Image not found: {image_path}")
-        return Image.open(image_path).convert("RGB")
+        img = Image.open(image_path).convert("RGB")
+        print(f"[DEBUG] Loaded image type: {type(img)}, size: {img.size}, mode: {img.mode}")
+        return img
 
     def perform_ocr(self, image: Image.Image) -> str:
         """Perform OCR on the given PIL Image and return extracted text."""
-        # convert to numpy + grayscale
-        arr = np.array(image)
-        gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+        # Ensure image is PIL Image
+        if not isinstance(image, Image.Image):
+            raise ValueError(f"Expected PIL Image, got {type(image)}")
+        
+        # Convert to numpy array with explicit dtype for NumPy 2.x compatibility
+        arr = np.asarray(image, dtype=np.uint8)
+        
+        # Convert to grayscale
+        if len(arr.shape) == 3 and arr.shape[2] == 3:
+            # Ensure contiguous array for OpenCV
+            arr = np.ascontiguousarray(arr)
+            gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
+        elif len(arr.shape) == 2:
+            gray = arr
+        else:
+            # Fallback to PIL conversion
+            gray = np.array(image.convert('L'), dtype=np.uint8)
 
-        # denoise and enhance
+        # Ensure gray is contiguous
+        gray = np.ascontiguousarray(gray, dtype=np.uint8)
+        
+        # Denoise and enhance
         denoised = cv2.fastNlMeansDenoising(gray, h=10)
-        # adaptive threshold to improve contrast for OCR
+        # Adaptive threshold to improve contrast for OCR
         th = cv2.adaptiveThreshold(denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
                                    cv2.THRESH_BINARY, 11, 2)
 
